@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BE 명세 및 API 설계</title>
+    <style>
+      :root {
+        --bg: #f3efe7;
+        --ink: #111827;
+        --muted: #6b7280;
+        --line: #d6d3d1;
+        --brand: #0f766e;
+        --accent: #1d4ed8;
+        --panel: rgba(255, 253, 250, 0.95);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Pretendard", "Noto Sans KR", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top right, rgba(15, 118, 110, 0.1), transparent 22%),
+          radial-gradient(circle at bottom left, rgba(29, 78, 216, 0.08), transparent 20%),
+          var(--bg);
+      }
+      .wrap {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 28px 20px 72px;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .topbar a {
+        text-decoration: none;
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid rgba(214, 211, 209, 0.92);
+        border-radius: 30px;
+        box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+      }
+      .hero, .section {
+        padding: 30px;
+        margin-top: 20px;
+      }
+      .hero { margin-top: 0; }
+      .badge {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(15, 118, 110, 0.1);
+        color: var(--brand);
+        font-size: 13px;
+        font-weight: 800;
+      }
+      h1 {
+        margin: 18px 0 12px;
+        font-size: clamp(34px, 5vw, 56px);
+        line-height: 1.04;
+        letter-spacing: -0.04em;
+      }
+      h2 {
+        margin: 0 0 16px;
+        font-size: 28px;
+        letter-spacing: -0.03em;
+      }
+      h3 {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
+      p, li {
+        color: var(--muted);
+        line-height: 1.75;
+      }
+      .grid2, .grid3, .endpoints {
+        display: grid;
+        gap: 14px;
+      }
+      .grid2 { grid-template-columns: 1fr 1fr; }
+      .grid3 { grid-template-columns: repeat(3, 1fr); }
+      .endpoints { grid-template-columns: 1fr; }
+      .card {
+        padding: 18px;
+        border-radius: 22px;
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+      .status-flow {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+      }
+      .step {
+        padding: 16px;
+        border-radius: 18px;
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+      .step strong { display: block; margin-bottom: 8px; }
+      .api {
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .api-head {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+      }
+      .api-head div {
+        padding: 14px 16px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .method {
+        font-weight: 800;
+        color: #fff;
+        text-align: center;
+      }
+      .get { background: #2563eb; }
+      .post { background: #0f766e; }
+      .put { background: #b45309; }
+      .delete { background: #b91c1c; }
+      .api-body {
+        padding: 18px;
+      }
+      pre {
+        margin: 12px 0 0;
+        padding: 18px;
+        overflow: auto;
+        border-radius: 18px;
+        background: #0f172a;
+        color: #e5eefb;
+        font-size: 13px;
+        line-height: 1.65;
+      }
+      ul { margin: 0; padding-left: 18px; }
+      code { font-family: "SFMono-Regular", Consolas, monospace; }
+      @media (max-width: 1024px) {
+        .grid2, .grid3, .status-flow { grid-template-columns: 1fr; }
+        .api-head { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="topbar">
+        <a href="./mysql-settings-model.html">← MySQL 모델링</a>
+        <a href="./index.html">문서 목록</a>
+      </div>
+
+      <section class="panel hero">
+        <span class="badge">Backend Specification</span>
+        <h1>RDB 마이그레이션<br />BE 명세 및 Endpoint 설계</h1>
+        <p>
+          이 문서는 백엔드 팀 기준의 실무 설계 문서입니다.
+          단순 CRUD 수준이 아니라 <strong>상태 전이</strong>, <strong>비동기 실행</strong>,
+          <strong>연결 테스트</strong>, <strong>매핑 검증</strong>, <strong>실행 이력</strong>까지
+          포함해 1차 납품 가능한 수준으로 정리합니다.
+        </p>
+      </section>
+
+      <section class="panel section">
+        <h2>도메인 경계</h2>
+        <div class="grid3">
+          <div class="card">
+            <h3>Connection Context</h3>
+            <p>소스/타겟 연결정보 등록, 수정, 테스트를 담당합니다.</p>
+          </div>
+          <div class="card">
+            <h3>Migration Definition Context</h3>
+            <p>작업 정의, 매핑 규칙, 동기화 옵션을 관리합니다.</p>
+          </div>
+          <div class="card">
+            <h3>Execution Context</h3>
+            <p>실행 요청, 실행 잠금, 진행 상태, 결과 기록을 담당합니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>상태 전이</h2>
+        <div class="status-flow">
+          <div class="step"><strong>draft</strong>설정 작성 중. 실행 불가</div>
+          <div class="step"><strong>ready</strong>연결 테스트/매핑 검증 완료. 실행 가능</div>
+          <div class="step"><strong>running</strong>실행 중. 동일 job 동시 실행 금지</div>
+          <div class="step"><strong>failed</strong>최근 실행 실패 또는 검증 실패</div>
+          <div class="step"><strong>archived</strong>운영 제외. 조회만 허용</div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>핵심 설계 결정</h2>
+        <div class="grid2">
+          <div class="card">
+            <h3>동시 실행 정책</h3>
+            <ul>
+              <li>같은 <code>job_id</code>는 동시에 하나만 실행</li>
+              <li><code>running</code> 상태에서 재실행 요청 시 <code>409 Conflict</code></li>
+              <li>DB 상태 전이와 워커 enqueue를 한 트랜잭션으로 묶음</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>검증 정책</h3>
+            <ul>
+              <li>저장과 실행을 분리</li>
+              <li>실행 전 반드시 source/target 연결 테스트 성공 필요</li>
+              <li>매핑 필수값 누락 시 <code>ready</code> 전환 금지</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>Endpoint 설계</h2>
+        <div class="endpoints">
+          <div class="api">
+            <div class="api-head">
+              <div class="method post">POST</div>
+              <div><code>/api/v1/migration/sources/test</code></div>
+            </div>
+            <div class="api-body">
+              <p>RDB 소스 연결 테스트. 저장 전 사전 검증 용도입니다.</p>
+              <ul>
+                <li>입력: <code>sourceType</code>, <code>host</code>, <code>port</code>, <code>databaseName</code>, <code>username</code>, <code>password</code>, <code>jdbcParams</code></li>
+                <li>성공 시 DB 버전, 연결 지연시간, 스키마 조회 가능 여부 반환</li>
+              </ul>
+              <pre>{
+  "sourceType": "mysql",
+  "host": "mysql-prod.example.com",
+  "port": 3306,
+  "databaseName": "product_db",
+  "username": "migration_user",
+  "password": "******",
+  "jdbcParams": {
+    "useSSL": true
+  }
+}</pre>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method post">POST</div>
+              <div><code>/api/v1/migration/targets/test</code></div>
+            </div>
+            <div class="api-body">
+              <p>MongoDB 타겟 연결 테스트.</p>
+              <ul>
+                <li>입력: <code>uri</code>, <code>databaseName</code></li>
+                <li>성공 시 서버 버전, 쓰기 권한, 컬렉션 조회 가능 여부 반환</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method post">POST</div>
+              <div><code>/api/v1/migration/jobs</code></div>
+            </div>
+            <div class="api-body">
+              <p>마이그레이션 작업 생성. source/target과 job, mapping을 한 번에 생성합니다.</p>
+              <ul>
+                <li>저장 후 기본 상태는 <code>draft</code></li>
+                <li>실패 시 source/target/job/mapping 전체 롤백</li>
+              </ul>
+              <pre>{
+  "jobName": "USER_SERVICE_USERS",
+  "source": {
+    "sourceType": "mysql",
+    "host": "mysql-prod.example.com",
+    "port": 3306,
+    "databaseName": "user_db",
+    "username": "migration_user",
+    "passwordSecret": "secret:mysql/prod/user-db"
+  },
+  "target": {
+    "targetType": "mongodb",
+    "uri": "mongodb://mongo-user:***@mongo-prod.example.com:27017",
+    "databaseName": "user_db_mongo",
+    "collectionName": "users"
+  },
+  "syncMode": "full",
+  "scheduleType": "manual",
+  "mappings": [
+    {
+      "targetCollectionName": "users",
+      "sourceTable": "users",
+      "sourceColumn": "id",
+      "targetField": "_id",
+      "targetType": "objectId",
+      "isKeyField": true,
+      "isPkMapping": true,
+      "enabled": true,
+      "sortOrder": 1
+    }
+  ]
+}</pre>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method get">GET</div>
+              <div><code>/api/v1/migration/jobs</code></div>
+            </div>
+            <div class="api-body">
+              <p>마이그레이션 작업 목록 조회.</p>
+              <ul>
+                <li>Query: <code>status</code>, <code>sourceType</code>, <code>keyword</code>, <code>page</code>, <code>size</code></li>
+                <li>기본 정렬: <code>updatedAt desc</code></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method get">GET</div>
+              <div><code>/api/v1/migration/jobs/{jobId}</code></div>
+            </div>
+            <div class="api-body">
+              <p>작업 상세 조회. source/target/mappings/latestExecution을 포함합니다.</p>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method put">PUT</div>
+              <div><code>/api/v1/migration/jobs/{jobId}</code></div>
+            </div>
+            <div class="api-body">
+              <p>작업 수정. <code>running</code> 상태에서는 수정 금지입니다.</p>
+              <ul>
+                <li>수정 시 기존 mapping은 replace 전략 권장</li>
+                <li>수정 성공 후 상태는 다시 <code>draft</code> 또는 <code>ready</code> 재판정</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method post">POST</div>
+              <div><code>/api/v1/migration/jobs/{jobId}/validate</code></div>
+            </div>
+            <div class="api-body">
+              <p>실행 가능 상태 검증.</p>
+              <ul>
+                <li>source 연결 테스트 결과</li>
+                <li>target 연결 테스트 결과</li>
+                <li>필수 매핑 존재 여부</li>
+                <li>중복 targetField 여부</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method post">POST</div>
+              <div><code>/api/v1/migration/jobs/{jobId}/activate</code></div>
+            </div>
+            <div class="api-body">
+              <p>검증 통과 시 상태를 <code>ready</code>로 전환합니다.</p>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method post">POST</div>
+              <div><code>/api/v1/migration/jobs/{jobId}/run</code></div>
+            </div>
+            <div class="api-body">
+              <p>마이그레이션 실행 요청. 비동기 워커로 enqueue 합니다.</p>
+              <ul>
+                <li>선행조건: <code>status = ready</code></li>
+                <li>성공 시 <code>executionId</code> 반환</li>
+                <li>DB row lock 또는 상태 업데이트 조건절로 중복 실행 차단</li>
+              </ul>
+              <pre>{
+  "runMode": "manual",
+  "requestedBy": "admin",
+  "reason": "초기 적재 실행"
+}</pre>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method post">POST</div>
+              <div><code>/api/v1/migration/executions/{executionId}/stop</code></div>
+            </div>
+            <div class="api-body">
+              <p>실행 중지 요청. 워커 cooperative cancel 방식 권장.</p>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method get">GET</div>
+              <div><code>/api/v1/migration/executions/{executionId}</code></div>
+            </div>
+            <div class="api-body">
+              <p>실행 단건 조회. 진행률, read/write count, latest error를 포함합니다.</p>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method get">GET</div>
+              <div><code>/api/v1/migration/jobs/{jobId}/executions</code></div>
+            </div>
+            <div class="api-body">
+              <p>작업별 실행 이력 목록 조회.</p>
+            </div>
+          </div>
+
+          <div class="api">
+            <div class="api-head">
+              <div class="method delete">DELETE</div>
+              <div><code>/api/v1/migration/jobs/{jobId}</code></div>
+            </div>
+            <div class="api-body">
+              <p>소프트 삭제 권장. 실제로는 <code>archived</code> 전환을 권장합니다.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>응답 규격</h2>
+        <div class="grid2">
+          <div class="card">
+            <h3>성공 응답</h3>
+            <pre>{
+  "success": true,
+  "data": {},
+  "meta": {
+    "requestId": "req_20260623_0001"
+  }
+}</pre>
+          </div>
+          <div class="card">
+            <h3>실패 응답</h3>
+            <pre>{
+  "success": false,
+  "error": {
+    "code": "MIGRATION_JOB_INVALID_STATE",
+    "message": "현재 상태에서는 실행할 수 없습니다.",
+    "details": {
+      "currentStatus": "running"
+    }
+  },
+  "meta": {
+    "requestId": "req_20260623_0002"
+  }
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>주요 에러 코드</h2>
+        <div class="grid3">
+          <div class="card"><strong>MIGRATION_SOURCE_CONNECT_FAILED</strong><p>소스 DB 연결 실패</p></div>
+          <div class="card"><strong>MIGRATION_TARGET_CONNECT_FAILED</strong><p>MongoDB 연결 실패</p></div>
+          <div class="card"><strong>MIGRATION_JOB_INVALID_STATE</strong><p>현재 상태에서 허용되지 않는 작업 요청</p></div>
+          <div class="card"><strong>MIGRATION_MAPPING_INVALID</strong><p>매핑 누락 또는 중복 정의</p></div>
+          <div class="card"><strong>MIGRATION_EXECUTION_ALREADY_RUNNING</strong><p>동일 작업 실행 중복 요청</p></div>
+          <div class="card"><strong>MIGRATION_JOB_NOT_FOUND</strong><p>작업 미존재</p></div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>운영 관점 권장사항</h2>
+        <div class="grid2">
+          <div class="card">
+            <h3>트랜잭션</h3>
+            <ul>
+              <li>작업 생성/수정은 DB 트랜잭션 필수</li>
+              <li>실행 요청은 상태 변경 + execution row 생성 + queue enqueue를 원자적으로 처리</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>보안</h3>
+            <ul>
+              <li>패스워드는 절대 API 응답에 다시 노출하지 않음</li>
+              <li>민감정보는 마스킹 로그만 허용</li>
+              <li>실행/중지/삭제는 관리자 권한 필요</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+  </html>

@@ -1,0 +1,165 @@
+%% zium-mongo-migration.erd
+%% Data integration solution - Phase 1 RDB to MongoDB migration ERD
+%% Source documents:
+%% - 데이터 통합 솔루션 개발 기획서_.pptx
+%% - zium-mongo-migration-share/*.html
+
+erDiagram
+  MIGRATION_SOURCE ||--o{ MIGRATION_JOB : is_source_of
+  MIGRATION_TARGET ||--o{ MIGRATION_JOB : is_target_of
+  MIGRATION_JOB ||--o{ MIGRATION_SOURCE_DATASET : selects
+  MIGRATION_JOB ||--o{ MIGRATION_MAPPING : has
+  MIGRATION_JOB ||--o{ MIGRATION_TARGET_INDEX : creates
+  MIGRATION_JOB ||--o{ MIGRATION_POST_ACTION : runs_after_load
+  MIGRATION_JOB ||--o{ MIGRATION_EXECUTION : executes
+  MIGRATION_JOB ||--o{ MIGRATION_AUDIT_HISTORY : changes
+  MIGRATION_EXECUTION ||--o{ MIGRATION_EXECUTION_LOG : records
+
+  MIGRATION_SOURCE {
+    BIGINT id PK "소스 연결정보 ID"
+    VARCHAR source_type "mysql, postgresql, oracle 등"
+    VARCHAR connection_name "소스 연결명"
+    VARCHAR host "소스 DB 호스트"
+    INT port "소스 DB 포트"
+    VARCHAR database_name "RDB 데이터베이스명"
+    VARCHAR username "접속 계정"
+    VARCHAR password_secret "시크릿 저장소 참조키"
+    JSON jdbc_params_json "JDBC/SSL 등 추가 옵션"
+    DATETIME last_tested_at "최근 연결 테스트 시각"
+    VARCHAR last_test_status "success, failed"
+    DATETIME created_at "생성 시각"
+    DATETIME updated_at "수정 시각"
+  }
+
+  MIGRATION_TARGET {
+    BIGINT id PK "타겟 연결정보 ID"
+    VARCHAR target_type "mongodb"
+    VARCHAR connection_name "타겟 연결명"
+    VARCHAR uri_secret "MongoDB URI 또는 시크릿 참조키"
+    VARCHAR connection_scheme "mongodb, mongodb+srv"
+    VARCHAR host "MongoDB 호스트"
+    INT port "MongoDB 포트"
+    VARCHAR database_name "타겟 데이터베이스명"
+    VARCHAR default_collection_name "기본 컬렉션명"
+    JSON auth_options_json "인증/TLS/Atlas 옵션"
+    DATETIME last_tested_at "최근 연결 테스트 시각"
+    VARCHAR last_test_status "success, failed"
+    DATETIME created_at "생성 시각"
+    DATETIME updated_at "수정 시각"
+  }
+
+  MIGRATION_JOB {
+    BIGINT id PK "마이그레이션 작업 ID"
+    VARCHAR job_code UK "CONN001 등 화면 표시용 ID"
+    VARCHAR job_name "운영자가 식별하는 작업명"
+    BIGINT source_id FK "MIGRATION_SOURCE.id"
+    BIGINT target_id FK "MIGRATION_TARGET.id"
+    VARCHAR sync_mode "full, incremental"
+    VARCHAR schedule_type "manual, interval, cron"
+    VARCHAR schedule_expr "간격 또는 Cron 표현식"
+    VARCHAR status "draft, ready, running, failed, archived"
+    VARCHAR created_by "생성자"
+    DATETIME last_executed_at "최근 실행 시각"
+    VARCHAR last_execution_status "최근 실행 상태"
+    DATETIME created_at "생성 시각"
+    DATETIME updated_at "수정 시각"
+  }
+
+  MIGRATION_SOURCE_DATASET {
+    BIGINT id PK "이관 대상 테이블/컬럼 선택 ID"
+    BIGINT job_id FK "MIGRATION_JOB.id"
+    VARCHAR source_schema "소스 스키마명"
+    VARCHAR source_table "소스 테이블명"
+    VARCHAR source_column "소스 컬럼명"
+    VARCHAR source_data_type "소스 컬럼 타입"
+    BOOLEAN is_selected "이관 대상 선택 여부"
+    BOOLEAN is_primary_key "원본 PK 여부"
+    VARCHAR incremental_key_column "증분 기준 컬럼"
+    INT sort_order "표시 순서"
+    DATETIME created_at "생성 시각"
+    DATETIME updated_at "수정 시각"
+  }
+
+  MIGRATION_MAPPING {
+    BIGINT id PK "컬럼-필드 매핑 ID"
+    BIGINT job_id FK "MIGRATION_JOB.id"
+    VARCHAR target_collection_name "적용 대상 MongoDB 컬렉션명"
+    VARCHAR source_table "원본 RDB 테이블명"
+    VARCHAR source_column "원본 RDB 컬럼명"
+    VARCHAR target_field "MongoDB 문서 필드 경로"
+    VARCHAR target_type "string, int32, int64, date, boolean, objectId 등"
+    BOOLEAN is_key_field "업서트 식별 키 여부"
+    BOOLEAN is_pk_mapping "원본 PK 매핑 여부"
+    VARCHAR null_handling_type "keep_null, default_value, skip_field"
+    VARCHAR default_value "널/빈 문자열 대체값"
+    JSON transform_rule_json "치환, 패턴, 케이스, 포맷, 품질 규칙"
+    BOOLEAN enabled "활성화 여부"
+    INT sort_order "적용 순서"
+    DATETIME created_at "생성 시각"
+    DATETIME updated_at "수정 시각"
+  }
+
+  MIGRATION_TARGET_INDEX {
+    BIGINT id PK "MongoDB 인덱스 정의 ID"
+    BIGINT job_id FK "MIGRATION_JOB.id"
+    VARCHAR collection_name "인덱스 대상 컬렉션명"
+    VARCHAR index_name "인덱스명"
+    JSON index_keys_json "필드와 정렬 방향"
+    BOOLEAN unique_yn "유니크 여부"
+    JSON options_json "TTL, sparse 등 옵션"
+    BOOLEAN enabled "생성 대상 여부"
+    DATETIME created_at "생성 시각"
+    DATETIME updated_at "수정 시각"
+  }
+
+  MIGRATION_POST_ACTION {
+    BIGINT id PK "적재 후 MongoDB 작업 ID"
+    BIGINT job_id FK "MIGRATION_JOB.id"
+    VARCHAR collection_name "대상 컬렉션명"
+    VARCHAR action_type "updateMany, aggregate, command 등"
+    JSON query_json "필터 또는 집계 파이프라인"
+    BOOLEAN enabled "실행 여부"
+    INT sort_order "실행 순서"
+    DATETIME created_at "생성 시각"
+    DATETIME updated_at "수정 시각"
+  }
+
+  MIGRATION_EXECUTION {
+    BIGINT id PK "실행 이력 ID"
+    BIGINT job_id FK "MIGRATION_JOB.id"
+    VARCHAR execution_code UK "sync-YYYYMMDD-HHMMSS"
+    VARCHAR run_mode "manual, scheduled"
+    VARCHAR requested_by "요청자"
+    VARCHAR result_status "queued, running, success, failed, stopped, partial_success"
+    BIGINT read_count "읽은 레코드 수"
+    BIGINT written_count "적재 완료 수"
+    BIGINT failed_count "실패 수"
+    DECIMAL progress_rate "진행률"
+    INT response_time_ms "응답 시간"
+    TEXT error_message "실패 요약 메시지"
+    DATETIME started_at "실행 시작 시각"
+    DATETIME ended_at "실행 종료 시각"
+    DATETIME created_at "이력 생성 시각"
+  }
+
+  MIGRATION_EXECUTION_LOG {
+    BIGINT id PK "실행 로그 ID"
+    BIGINT execution_id FK "MIGRATION_EXECUTION.id"
+    VARCHAR log_level "ERROR, WARN, INFO, DEBUG"
+    VARCHAR issue_type "connection, transform, validation, write 등"
+    TEXT message "로그 메시지"
+    JSON context_json "테이블, 컬럼, 배치, 예외 상세"
+    DATETIME logged_at "로그 발생 시각"
+  }
+
+  MIGRATION_AUDIT_HISTORY {
+    BIGINT id PK "변경/운영 이력 ID"
+    BIGINT job_id FK "MIGRATION_JOB.id"
+    VARCHAR history_type "created, updated, executed, schedule_changed, stopped"
+    VARCHAR event_status "success, failed, applied"
+    TEXT description "이력 설명"
+    VARCHAR actor "수행자"
+    JSON before_json "변경 전 값"
+    JSON after_json "변경 후 값"
+    DATETIME occurred_at "이력 발생 시각"
+  }

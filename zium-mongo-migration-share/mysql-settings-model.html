@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MySQL 설정정보 모델링</title>
+    <style>
+      :root {
+        --bg: #f4f1ea;
+        --ink: #111827;
+        --muted: #6b7280;
+        --line: #d6d3d1;
+        --brand: #1d4ed8;
+        --accent: #0f766e;
+        --panel: rgba(255, 253, 250, 0.94);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Pretendard", "Noto Sans KR", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(29, 78, 216, 0.1), transparent 24%),
+          radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.08), transparent 20%),
+          var(--bg);
+      }
+      .wrap {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 28px 20px 72px;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .topbar a {
+        text-decoration: none;
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid rgba(214, 211, 209, 0.92);
+        border-radius: 30px;
+        box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+      }
+      .hero, .section {
+        padding: 30px;
+        margin-top: 20px;
+      }
+      .hero { margin-top: 0; }
+      .badge {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(29, 78, 216, 0.1);
+        color: var(--brand);
+        font-size: 13px;
+        font-weight: 800;
+      }
+      h1 {
+        margin: 18px 0 12px;
+        font-size: clamp(32px, 5vw, 54px);
+        line-height: 1.04;
+        letter-spacing: -0.04em;
+      }
+      h2 {
+        margin: 0 0 16px;
+        font-size: 28px;
+        letter-spacing: -0.03em;
+      }
+      h3 {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
+      p, li {
+        color: var(--muted);
+        line-height: 1.75;
+      }
+      .cards, .model, .field-grid, .tables, .gallery, .principles {
+        display: grid;
+        gap: 14px;
+      }
+      .cards { grid-template-columns: repeat(3, 1fr); margin-top: 22px; }
+      .model, .tables { grid-template-columns: 1fr 1fr; }
+      .field-grid { grid-template-columns: repeat(2, 1fr); }
+      .principles { grid-template-columns: repeat(3, 1fr); }
+      .gallery { grid-template-columns: 1fr; }
+      .card {
+        padding: 18px;
+        border-radius: 22px;
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+      .card img {
+        width: 100%;
+        display: block;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        margin-top: 14px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+        border-radius: 22px;
+        border: 1px solid var(--line);
+        background: #fff;
+      }
+      .table {
+        min-width: 860px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1.1fr .9fr .8fr 1.8fr;
+      }
+      .row > div {
+        padding: 14px 12px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #fff;
+        font-size: 14px;
+        line-height: 1.6;
+        word-break: keep-all;
+        overflow-wrap: anywhere;
+      }
+      .row.head > div {
+        background: #f3f4f6;
+        font-weight: 800;
+      }
+      .tag {
+        display: inline-block;
+        margin: 0 8px 8px 0;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #f3f4f6;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      pre {
+        margin: 0;
+        padding: 20px;
+        overflow: auto;
+        border-radius: 22px;
+        background: #0f172a;
+        color: #e5eefb;
+        font-size: 13px;
+        line-height: 1.7;
+        white-space: pre;
+      }
+      code { font-family: "SFMono-Regular", Consolas, monospace; }
+      ul { margin: 0; padding-left: 18px; }
+      @media (max-width: 1024px) {
+        .cards, .model, .field-grid, .tables, .principles { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="topbar">
+        <a href="./phase1-connection-scope.html">← 1차 개발 범위</a>
+        <a href="./backend-api-spec.html">BE 명세 / API 설계 보기 →</a>
+      </div>
+
+      <section class="panel hero">
+        <span class="badge">MySQL 기준 설정정보 모델</span>
+        <h1>설정정보 모델링<br />MySQL DDL 기준 정리</h1>
+        <p>
+          이 문서는 설정정보 메타데이터를 MySQL에 저장한다는 전제로 작성한 백엔드 설계 초안입니다.
+          화면 입력 모델보다 한 단계 아래인 <strong>영속 계층</strong> 관점에서,
+          마이그레이션 작업 정의, 소스/타겟 연결, 필드 매핑, 실행 이력을
+          어떻게 테이블로 나눌지 정리합니다.
+        </p>
+        <div class="cards">
+          <div class="card">
+            <strong>정규화</strong>
+            소스, 타겟, 작업, 매핑, 실행 이력을 분리 저장
+          </div>
+          <div class="card">
+            <strong>운영성</strong>
+            상태 조회, 검색, 재실행, 이력 관리가 쉬운 구조
+          </div>
+          <div class="card">
+            <strong>확장성</strong>
+            초기 1차는 MySQL 소스 중심, 이후 타 RDB 확장 가능
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>15년차 BE 관점 핵심 원칙</h2>
+        <div class="principles">
+          <div class="card">
+            <h3>설정과 실행 분리</h3>
+            <p>설정 메타데이터와 실행 이력은 같은 테이블에 두지 않습니다. 변경 빈도와 조회 패턴이 다릅니다.</p>
+          </div>
+          <div class="card">
+            <h3>비밀번호 평문 저장 금지</h3>
+            <p><code>password_secret</code> 또는 별도 시크릿 저장소 키만 DB에 보관합니다.</p>
+          </div>
+          <div class="card">
+            <h3>재실행 가능성 우선</h3>
+            <p>매핑 정의와 실행 결과를 분리 저장해야 동일 작업의 재실행과 비교가 가능합니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>모델 개요</h2>
+        <div class="model">
+          <div class="card">
+            <h3>핵심 엔터티</h3>
+            <ul>
+              <li><code>migration_source</code> : 소스 DB 연결정보</li>
+              <li><code>migration_target</code> : MongoDB 타겟 연결정보</li>
+              <li><code>migration_job</code> : 마이그레이션 작업 정의</li>
+              <li><code>migration_mapping</code> : 컬럼 → 필드 매핑 정의</li>
+              <li><code>migration_execution</code> : 실행 이력</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>권장 확장 포인트</h3>
+            <ul>
+              <li>추후 <code>source_type</code>으로 PostgreSQL, Oracle 확장</li>
+              <li>고급 변환 로직은 <code>transform_rule_json</code>에서 관리</li>
+              <li>대규모 실행 로그는 별도 로그 저장소로 분리 고려</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>테이블 구조 제안</h2>
+        <div class="tables">
+          <div class="table-wrap">
+            <div class="table">
+              <div class="row head">
+                <div>migration_job</div>
+                <div>타입</div>
+                <div>필수</div>
+                <div>설명</div>
+              </div>
+              <div class="row"><div>id</div><div>bigint</div><div>Y</div><div>마이그레이션 작업 PK</div></div>
+              <div class="row"><div>job_name</div><div>varchar(200)</div><div>Y</div><div>운영자가 식별하는 작업명</div></div>
+              <div class="row"><div>source_id</div><div>bigint</div><div>Y</div><div>migration_source FK</div></div>
+              <div class="row"><div>target_id</div><div>bigint</div><div>Y</div><div>migration_target FK</div></div>
+              <div class="row"><div>sync_mode</div><div>varchar(20)</div><div>Y</div><div>full / incremental</div></div>
+              <div class="row"><div>schedule_type</div><div>varchar(20)</div><div>N</div><div>manual / interval / cron</div></div>
+              <div class="row"><div>schedule_expr</div><div>varchar(120)</div><div>N</div><div>Cron 또는 간격 표현식</div></div>
+              <div class="row"><div>status</div><div>varchar(20)</div><div>Y</div><div>draft / ready / running / failed / archived</div></div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <div class="table">
+              <div class="row head">
+                <div>migration_source</div>
+                <div>타입</div>
+                <div>필수</div>
+                <div>설명</div>
+              </div>
+              <div class="row"><div>id</div><div>bigint</div><div>Y</div><div>소스 연결정보 PK</div></div>
+              <div class="row"><div>source_type</div><div>varchar(30)</div><div>Y</div><div>mysql, postgres 등</div></div>
+              <div class="row"><div>host</div><div>varchar(255)</div><div>Y</div><div>소스 호스트</div></div>
+              <div class="row"><div>port</div><div>int</div><div>Y</div><div>소스 포트</div></div>
+              <div class="row"><div>database_name</div><div>varchar(120)</div><div>Y</div><div>RDB 데이터베이스명</div></div>
+              <div class="row"><div>username</div><div>varchar(120)</div><div>Y</div><div>접속 계정</div></div>
+              <div class="row"><div>password_secret</div><div>varchar(255)</div><div>Y</div><div>시크릿 저장소 참조키</div></div>
+              <div class="row"><div>jdbc_params_json</div><div>json</div><div>N</div><div>추가 JDBC 옵션</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <div class="tables">
+          <div class="table-wrap">
+            <div class="table">
+              <div class="row head">
+                <div>migration_target</div>
+                <div>타입</div>
+                <div>필수</div>
+                <div>설명</div>
+              </div>
+              <div class="row"><div>id</div><div>bigint</div><div>Y</div><div>타겟 연결정보 PK</div></div>
+              <div class="row"><div>target_type</div><div>varchar(30)</div><div>Y</div><div>mongodb 고정</div></div>
+              <div class="row"><div>uri</div><div>varchar(500)</div><div>Y</div><div>MongoDB 연결 URI</div></div>
+              <div class="row"><div>database_name</div><div>varchar(120)</div><div>Y</div><div>저장 대상 DB명</div></div>
+              <div class="row"><div>collection_name</div><div>varchar(120)</div><div>N</div><div>기본 컬렉션명</div></div>
+              <div class="row"><div>options_json</div><div>json</div><div>N</div><div>추가 옵션</div></div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <div class="table">
+              <div class="row head">
+                <div>migration_execution</div>
+                <div>타입</div>
+                <div>필수</div>
+                <div>설명</div>
+              </div>
+              <div class="row"><div>id</div><div>bigint</div><div>Y</div><div>실행 이력 PK</div></div>
+              <div class="row"><div>job_id</div><div>bigint</div><div>Y</div><div>migration_job FK</div></div>
+              <div class="row"><div>started_at</div><div>datetime</div><div>Y</div><div>실행 시작 시각</div></div>
+              <div class="row"><div>ended_at</div><div>datetime</div><div>N</div><div>실행 종료 시각</div></div>
+              <div class="row"><div>result_status</div><div>varchar(20)</div><div>Y</div><div>success / failed / stopped / partial_success</div></div>
+              <div class="row"><div>read_count</div><div>bigint</div><div>N</div><div>읽은 레코드 수</div></div>
+              <div class="row"><div>written_count</div><div>bigint</div><div>N</div><div>적재 완료 수</div></div>
+              <div class="row"><div>error_message</div><div>text</div><div>N</div><div>실패 요약 메시지</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>매핑 정보 테이블</h2>
+        <div class="table-wrap">
+          <div class="table">
+            <div class="row head">
+              <div>migration_mapping</div>
+              <div>타입</div>
+              <div>필수</div>
+              <div>설명</div>
+            </div>
+            <div class="row"><div>id</div><div>bigint</div><div>Y</div><div>매핑 정의 PK</div></div>
+            <div class="row"><div>job_id</div><div>bigint</div><div>Y</div><div>migration_job FK</div></div>
+            <div class="row"><div>target_collection_name</div><div>varchar(120)</div><div>Y</div><div>이 매핑이 적용되는 MongoDB 컬렉션명</div></div>
+            <div class="row"><div>source_table</div><div>varchar(120)</div><div>Y</div><div>RDB 원본 테이블명</div></div>
+            <div class="row"><div>source_column</div><div>varchar(120)</div><div>Y</div><div>RDB 원본 컬럼명</div></div>
+            <div class="row"><div>target_field</div><div>varchar(200)</div><div>Y</div><div>MongoDB 문서 필드 경로. 예: user.profile.name</div></div>
+            <div class="row"><div>target_type</div><div>varchar(30)</div><div>N</div><div>string, int64, date, boolean, objectId 등</div></div>
+            <div class="row"><div>is_key_field</div><div>tinyint(1)</div><div>N</div><div>업서트나 식별 기준으로 사용하는 키 필드 여부</div></div>
+            <div class="row"><div>is_pk_mapping</div><div>tinyint(1)</div><div>N</div><div>RDB PK 컬럼을 매핑한 항목인지 표시</div></div>
+            <div class="row"><div>null_handling_type</div><div>varchar(30)</div><div>N</div><div>keep_null, default_value, skip_field 등 널 처리 정책</div></div>
+            <div class="row"><div>default_value</div><div>varchar(255)</div><div>N</div><div>null 처리 시 대체할 기본값</div></div>
+            <div class="row"><div>transform_rule_json</div><div>json</div><div>N</div><div>치환, 포맷, 마스킹, 케이스 변환 등 상세 규칙</div></div>
+            <div class="row"><div>enabled</div><div>tinyint(1)</div><div>Y</div><div>현재 매핑 활성화 여부</div></div>
+            <div class="row"><div>sort_order</div><div>int</div><div>N</div><div>화면 표시 및 적용 순서</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>MySQL DDL</h2>
+        <pre><code>CREATE TABLE migration_source (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT '소스 연결정보 ID',
+  source_type VARCHAR(30) NOT NULL COMMENT '소스 유형: mysql, postgres 등',
+  host VARCHAR(255) NOT NULL COMMENT '소스 DB 호스트',
+  port INT NOT NULL COMMENT '소스 DB 포트',
+  database_name VARCHAR(120) NOT NULL COMMENT '소스 데이터베이스명',
+  username VARCHAR(120) NOT NULL COMMENT '소스 DB 접속 계정',
+  password_secret VARCHAR(255) NOT NULL COMMENT '비밀번호 시크릿 참조 키',
+  jdbc_params_json JSON NULL COMMENT '추가 JDBC 연결 옵션',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시각',
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 시각',
+  PRIMARY KEY (id)
+) COMMENT='RDB 소스 연결정보';
+
+CREATE TABLE migration_target (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT '타겟 연결정보 ID',
+  target_type VARCHAR(30) NOT NULL COMMENT '타겟 유형: mongodb',
+  uri VARCHAR(500) NOT NULL COMMENT 'MongoDB 연결 URI',
+  database_name VARCHAR(120) NOT NULL COMMENT '타겟 데이터베이스명',
+  collection_name VARCHAR(120) NULL COMMENT '기본 타겟 컬렉션명',
+  options_json JSON NULL COMMENT '추가 타겟 옵션',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시각',
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 시각',
+  PRIMARY KEY (id)
+) COMMENT='MongoDB 타겟 연결정보';
+
+CREATE TABLE migration_job (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT '마이그레이션 작업 ID',
+  job_name VARCHAR(200) NOT NULL COMMENT '마이그레이션 작업명',
+  source_id BIGINT NOT NULL COMMENT '소스 연결정보 ID',
+  target_id BIGINT NOT NULL COMMENT '타겟 연결정보 ID',
+  sync_mode VARCHAR(20) NOT NULL COMMENT '동기화 방식: full, incremental',
+  schedule_type VARCHAR(20) NULL COMMENT '스케줄 유형: manual, interval, cron',
+  schedule_expr VARCHAR(120) NULL COMMENT '스케줄 표현식 또는 Cron',
+  status VARCHAR(20) NOT NULL DEFAULT 'draft' COMMENT '작업 상태: draft, ready, running, failed, archived',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시각',
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 시각',
+  PRIMARY KEY (id),
+  CONSTRAINT fk_migration_job_source
+    FOREIGN KEY (source_id) REFERENCES migration_source(id),
+  CONSTRAINT fk_migration_job_target
+    FOREIGN KEY (target_id) REFERENCES migration_target(id)
+) COMMENT='마이그레이션 작업 마스터';
+
+CREATE TABLE migration_mapping (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT '매핑 정의 ID',
+  job_id BIGINT NOT NULL COMMENT '마이그레이션 작업 ID',
+  target_collection_name VARCHAR(120) NOT NULL COMMENT '적용 대상 MongoDB 컬렉션명',
+  source_table VARCHAR(120) NOT NULL COMMENT '원본 RDB 테이블명',
+  source_column VARCHAR(120) NOT NULL COMMENT '원본 RDB 컬럼명',
+  target_field VARCHAR(200) NOT NULL COMMENT '타겟 MongoDB 문서 필드 경로',
+  target_type VARCHAR(30) NULL COMMENT '타겟 필드 타입',
+  is_key_field TINYINT(1) NULL DEFAULT 0 COMMENT '업서트 식별 키 여부',
+  is_pk_mapping TINYINT(1) NULL DEFAULT 0 COMMENT '원본 PK 매핑 여부',
+  null_handling_type VARCHAR(30) NULL COMMENT '널 처리 정책',
+  default_value VARCHAR(255) NULL COMMENT '널 처리 기본값',
+  transform_rule_json JSON NULL COMMENT '변환 규칙 JSON',
+  enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '활성화 여부',
+  sort_order INT NULL COMMENT '정렬 순서',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시각',
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 시각',
+  PRIMARY KEY (id),
+  CONSTRAINT fk_migration_mapping_job
+    FOREIGN KEY (job_id) REFERENCES migration_job(id)
+) COMMENT='컬럼-필드 매핑 정의';
+
+CREATE TABLE migration_execution (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT '실행 이력 ID',
+  job_id BIGINT NOT NULL COMMENT '마이그레이션 작업 ID',
+  started_at DATETIME NOT NULL COMMENT '실행 시작 시각',
+  ended_at DATETIME NULL COMMENT '실행 종료 시각',
+  result_status VARCHAR(20) NOT NULL COMMENT '실행 결과 상태',
+  read_count BIGINT NULL COMMENT '읽은 건수',
+  written_count BIGINT NULL COMMENT '적재 완료 건수',
+  error_message TEXT NULL COMMENT '오류 요약 메시지',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '이력 생성 시각',
+  PRIMARY KEY (id),
+  CONSTRAINT fk_migration_execution_job
+    FOREIGN KEY (job_id) REFERENCES migration_job(id)
+) COMMENT='마이그레이션 실행 이력';
+
+CREATE INDEX idx_migration_job_status
+  ON migration_job(status);
+
+CREATE INDEX idx_migration_mapping_job_sort
+  ON migration_mapping(job_id, sort_order);
+
+CREATE INDEX idx_migration_execution_job_started
+  ON migration_execution(job_id, started_at DESC);</code></pre>
+      </section>
+
+      <section class="panel section">
+        <h2>입력 필드와 MySQL 컬럼 매핑</h2>
+        <div class="field-grid">
+          <div class="card">
+            <strong>화면 입력값</strong><br /><br />
+            <span class="tag">Connection Name</span>
+            <span class="tag">Host</span>
+            <span class="tag">Port</span>
+            <span class="tag">Database</span>
+            <span class="tag">Username</span>
+            <span class="tag">Password</span>
+            <span class="tag">Mongo URI</span>
+            <span class="tag">Collection</span>
+          </div>
+          <div class="card">
+            <strong>저장 위치</strong>
+            <ul>
+              <li><code>migration_job.job_name</code></li>
+              <li><code>migration_source.host</code>, <code>port</code>, <code>database_name</code>, <code>username</code></li>
+              <li><code>migration_source.password_secret</code></li>
+              <li><code>migration_target.uri</code>, <code>collection_name</code></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>매핑 화면 목업</h2>
+        <div class="gallery">
+          <div class="card">
+            <strong>RDB 컬럼 → MongoDB 필드 매핑 예시</strong>
+            <img src="./assets/mockup-field-mapping.png" alt="필드 매핑 화면 목업" />
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+  </html>
