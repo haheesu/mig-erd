@@ -1,165 +1,3150 @@
-%% zium-mongo-migration.erd
-%% Data integration solution - Phase 1 RDB to MongoDB migration ERD
-%% Source documents:
-%% - 데이터 통합 솔루션 개발 기획서_.pptx
-%% - zium-mongo-migration-share/*.html
-
-erDiagram
-  MIGRATION_SOURCE ||--o{ MIGRATION_JOB : is_source_of
-  MIGRATION_TARGET ||--o{ MIGRATION_JOB : is_target_of
-  MIGRATION_JOB ||--o{ MIGRATION_SOURCE_DATASET : selects
-  MIGRATION_JOB ||--o{ MIGRATION_MAPPING : has
-  MIGRATION_JOB ||--o{ MIGRATION_TARGET_INDEX : creates
-  MIGRATION_JOB ||--o{ MIGRATION_POST_ACTION : runs_after_load
-  MIGRATION_JOB ||--o{ MIGRATION_EXECUTION : executes
-  MIGRATION_JOB ||--o{ MIGRATION_AUDIT_HISTORY : changes
-  MIGRATION_EXECUTION ||--o{ MIGRATION_EXECUTION_LOG : records
-
-  MIGRATION_SOURCE {
-    BIGINT id PK "소스 연결정보 ID"
-    VARCHAR source_type "mysql, postgresql, oracle 등"
-    VARCHAR connection_name "소스 연결명"
-    VARCHAR host "소스 DB 호스트"
-    INT port "소스 DB 포트"
-    VARCHAR database_name "RDB 데이터베이스명"
-    VARCHAR username "접속 계정"
-    VARCHAR password_secret "시크릿 저장소 참조키"
-    JSON jdbc_params_json "JDBC/SSL 등 추가 옵션"
-    DATETIME last_tested_at "최근 연결 테스트 시각"
-    VARCHAR last_test_status "success, failed"
-    DATETIME created_at "생성 시각"
-    DATETIME updated_at "수정 시각"
+{
+  "$schema": "https://raw.githubusercontent.com/dineug/erd-editor/main/json-schema/schema.json",
+  "version": "3.0.0",
+  "settings": {
+    "width": 2400,
+    "height": 2200,
+    "scrollTop": 0,
+    "scrollLeft": 0,
+    "zoomLevel": 1,
+    "show": 511,
+    "database": 4,
+    "databaseName": "zium_mongo_migration",
+    "canvasType": "ERD",
+    "language": 16,
+    "tableNameCase": 8,
+    "columnNameCase": 8,
+    "bracketType": 8,
+    "relationshipDataTypeSync": true,
+    "relationshipOptimization": true,
+    "columnOrder": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "maxWidthComment": 60,
+    "ignoreSaveSettings": 0
+  },
+  "doc": {
+    "tableIds": [
+      "tbl_source",
+      "tbl_target",
+      "tbl_job",
+      "tbl_dataset",
+      "tbl_mapping",
+      "tbl_index",
+      "tbl_post_action",
+      "tbl_execution",
+      "tbl_execution_log",
+      "tbl_audit"
+    ],
+    "relationshipIds": [
+      "rel_source_job",
+      "rel_target_job",
+      "rel_job_dataset",
+      "rel_job_mapping",
+      "rel_job_index",
+      "rel_job_post_action",
+      "rel_job_execution",
+      "rel_execution_log",
+      "rel_job_audit"
+    ],
+    "indexIds": [],
+    "memoIds": []
+  },
+  "collections": {
+    "tableEntities": {
+      "tbl_source": {
+        "id": "tbl_source",
+        "name": "migration_source",
+        "comment": "RDB 소스 연결정보",
+        "columnIds": [
+          "col_source_id",
+          "col_source_type",
+          "col_source_connection_name",
+          "col_source_host",
+          "col_source_port",
+          "col_source_database_name",
+          "col_source_username",
+          "col_source_password_secret",
+          "col_source_jdbc_params_json",
+          "col_source_last_tested_at",
+          "col_source_last_test_status",
+          "col_source_created_at",
+          "col_source_updated_at"
+        ],
+        "seqColumnIds": [
+          "col_source_id",
+          "col_source_type",
+          "col_source_connection_name",
+          "col_source_host",
+          "col_source_port",
+          "col_source_database_name",
+          "col_source_username",
+          "col_source_password_secret",
+          "col_source_jdbc_params_json",
+          "col_source_last_tested_at",
+          "col_source_last_test_status",
+          "col_source_created_at",
+          "col_source_updated_at"
+        ],
+        "ui": {
+          "x": 80,
+          "y": 80,
+          "zIndex": 1,
+          "widthName": 93,
+          "widthComment": 103,
+          "color": "#DDEBFF"
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "tbl_target": {
+        "id": "tbl_target",
+        "name": "migration_target",
+        "comment": "MongoDB 타겟 연결정보",
+        "columnIds": [
+          "col_target_id",
+          "col_target_type",
+          "col_target_connection_name",
+          "col_target_uri_secret",
+          "col_target_connection_scheme",
+          "col_target_host",
+          "col_target_port",
+          "col_target_database_name",
+          "col_target_default_collection_name",
+          "col_target_auth_options_json",
+          "col_target_last_tested_at",
+          "col_target_last_test_status",
+          "col_target_created_at",
+          "col_target_updated_at"
+        ],
+        "seqColumnIds": [
+          "col_target_id",
+          "col_target_type",
+          "col_target_connection_name",
+          "col_target_uri_secret",
+          "col_target_connection_scheme",
+          "col_target_host",
+          "col_target_port",
+          "col_target_database_name",
+          "col_target_default_collection_name",
+          "col_target_auth_options_json",
+          "col_target_last_tested_at",
+          "col_target_last_test_status",
+          "col_target_created_at",
+          "col_target_updated_at"
+        ],
+        "ui": {
+          "x": 755,
+          "y": 42.5,
+          "zIndex": 1,
+          "widthName": 90,
+          "widthComment": 135,
+          "color": "#E8F8EF"
+        },
+        "meta": {
+          "updateAt": 1783999226708,
+          "createAt": 1783999063990
+        }
+      },
+      "tbl_job": {
+        "id": "tbl_job",
+        "name": "migration_job",
+        "comment": "마이그레이션 작업 마스터",
+        "columnIds": [
+          "col_job_id",
+          "col_job_code",
+          "col_job_name",
+          "col_job_source_id",
+          "col_job_target_id",
+          "col_job_sync_mode",
+          "col_job_schedule_type",
+          "col_job_schedule_expr",
+          "col_job_status",
+          "col_job_created_by",
+          "col_job_last_executed_at",
+          "col_job_last_execution_status",
+          "col_job_created_at",
+          "col_job_updated_at"
+        ],
+        "seqColumnIds": [
+          "col_job_id",
+          "col_job_code",
+          "col_job_name",
+          "col_job_source_id",
+          "col_job_target_id",
+          "col_job_sync_mode",
+          "col_job_schedule_type",
+          "col_job_schedule_expr",
+          "col_job_status",
+          "col_job_created_by",
+          "col_job_last_executed_at",
+          "col_job_last_execution_status",
+          "col_job_created_at",
+          "col_job_updated_at"
+        ],
+        "ui": {
+          "x": 130,
+          "y": 555,
+          "zIndex": 1,
+          "widthName": 75,
+          "widthComment": 141,
+          "color": "#FFF3D6"
+        },
+        "meta": {
+          "updateAt": 1783999229552,
+          "createAt": 1783999063990
+        }
+      },
+      "tbl_dataset": {
+        "id": "tbl_dataset",
+        "name": "migration_source_dataset",
+        "comment": "이관 대상 테이블/컬럼 선택",
+        "columnIds": [
+          "col_dataset_id",
+          "col_dataset_job_id",
+          "col_dataset_source_schema",
+          "col_dataset_source_table",
+          "col_dataset_source_column",
+          "col_dataset_source_data_type",
+          "col_dataset_is_selected",
+          "col_dataset_is_primary_key",
+          "col_dataset_incremental_key_column",
+          "col_dataset_sort_order",
+          "col_dataset_created_at",
+          "col_dataset_updated_at"
+        ],
+        "seqColumnIds": [
+          "col_dataset_id",
+          "col_dataset_job_id",
+          "col_dataset_source_schema",
+          "col_dataset_source_table",
+          "col_dataset_source_column",
+          "col_dataset_source_data_type",
+          "col_dataset_is_selected",
+          "col_dataset_is_primary_key",
+          "col_dataset_incremental_key_column",
+          "col_dataset_sort_order",
+          "col_dataset_created_at",
+          "col_dataset_updated_at"
+        ],
+        "ui": {
+          "x": 1368.75,
+          "y": 345.75,
+          "zIndex": 1,
+          "widthName": 137,
+          "widthComment": 149,
+          "color": "#F5E8FF"
+        },
+        "meta": {
+          "updateAt": 1783999679211,
+          "createAt": 1783999063990
+        }
+      },
+      "tbl_mapping": {
+        "id": "tbl_mapping",
+        "name": "migration_mapping",
+        "comment": "컬럼-필드 매핑 정의",
+        "columnIds": [
+          "col_mapping_id",
+          "col_mapping_job_id",
+          "col_mapping_target_collection_name",
+          "col_mapping_source_table",
+          "col_mapping_source_column",
+          "col_mapping_target_field",
+          "col_mapping_target_type",
+          "col_mapping_is_key_field",
+          "col_mapping_is_pk_mapping",
+          "col_mapping_null_handling_type",
+          "col_mapping_default_value",
+          "col_mapping_transform_rule_json",
+          "col_mapping_enabled",
+          "col_mapping_sort_order",
+          "col_mapping_created_at",
+          "col_mapping_updated_at"
+        ],
+        "seqColumnIds": [
+          "col_mapping_id",
+          "col_mapping_job_id",
+          "col_mapping_target_collection_name",
+          "col_mapping_source_table",
+          "col_mapping_source_column",
+          "col_mapping_target_field",
+          "col_mapping_target_type",
+          "col_mapping_is_key_field",
+          "col_mapping_is_pk_mapping",
+          "col_mapping_null_handling_type",
+          "col_mapping_default_value",
+          "col_mapping_transform_rule_json",
+          "col_mapping_enabled",
+          "col_mapping_sort_order",
+          "col_mapping_created_at",
+          "col_mapping_updated_at"
+        ],
+        "ui": {
+          "x": 1182.5,
+          "y": 891.25,
+          "zIndex": 1,
+          "widthName": 106,
+          "widthComment": 109,
+          "color": "#FFE5E5"
+        },
+        "meta": {
+          "updateAt": 1783999255643,
+          "createAt": 1783999063990
+        }
+      },
+      "tbl_index": {
+        "id": "tbl_index",
+        "name": "migration_target_index",
+        "comment": "MongoDB 인덱스 정의",
+        "columnIds": [
+          "col_index_id",
+          "col_index_job_id",
+          "col_index_collection_name",
+          "col_index_index_name",
+          "col_index_index_keys_json",
+          "col_index_unique_yn",
+          "col_index_options_json",
+          "col_index_enabled",
+          "col_index_created_at",
+          "col_index_updated_at"
+        ],
+        "seqColumnIds": [
+          "col_index_id",
+          "col_index_job_id",
+          "col_index_collection_name",
+          "col_index_index_name",
+          "col_index_index_keys_json",
+          "col_index_unique_yn",
+          "col_index_options_json",
+          "col_index_enabled",
+          "col_index_created_at",
+          "col_index_updated_at"
+        ],
+        "ui": {
+          "x": 21.5,
+          "y": 1315.5,
+          "zIndex": 1,
+          "widthName": 124,
+          "widthComment": 123,
+          "color": "#E0F7FA"
+        },
+        "meta": {
+          "updateAt": 1783999481901,
+          "createAt": 1783999063990
+        }
+      },
+      "tbl_post_action": {
+        "id": "tbl_post_action",
+        "name": "migration_post_action",
+        "comment": "적재 후 MongoDB 작업",
+        "columnIds": [
+          "col_post_action_id",
+          "col_post_action_job_id",
+          "col_post_action_collection_name",
+          "col_post_action_action_type",
+          "col_post_action_query_json",
+          "col_post_action_enabled",
+          "col_post_action_sort_order",
+          "col_post_action_created_at",
+          "col_post_action_updated_at"
+        ],
+        "seqColumnIds": [
+          "col_post_action_id",
+          "col_post_action_job_id",
+          "col_post_action_collection_name",
+          "col_post_action_action_type",
+          "col_post_action_query_json",
+          "col_post_action_enabled",
+          "col_post_action_sort_order",
+          "col_post_action_created_at",
+          "col_post_action_updated_at"
+        ],
+        "ui": {
+          "x": 569.25,
+          "y": 1093,
+          "zIndex": 1,
+          "widthName": 119,
+          "widthComment": 126,
+          "color": "#F1F8E9"
+        },
+        "meta": {
+          "updateAt": 1783999504161,
+          "createAt": 1783999063990
+        }
+      },
+      "tbl_execution": {
+        "id": "tbl_execution",
+        "name": "migration_execution",
+        "comment": "마이그레이션 실행 이력",
+        "columnIds": [
+          "col_execution_id",
+          "col_execution_job_id",
+          "col_execution_execution_code",
+          "col_execution_run_mode",
+          "col_execution_requested_by",
+          "col_execution_result_status",
+          "col_execution_read_count",
+          "col_execution_written_count",
+          "col_execution_failed_count",
+          "col_execution_progress_rate",
+          "col_execution_response_time_ms",
+          "col_execution_error_message",
+          "col_execution_started_at",
+          "col_execution_ended_at",
+          "col_execution_created_at"
+        ],
+        "seqColumnIds": [
+          "col_execution_id",
+          "col_execution_job_id",
+          "col_execution_execution_code",
+          "col_execution_run_mode",
+          "col_execution_requested_by",
+          "col_execution_result_status",
+          "col_execution_read_count",
+          "col_execution_written_count",
+          "col_execution_failed_count",
+          "col_execution_progress_rate",
+          "col_execution_response_time_ms",
+          "col_execution_error_message",
+          "col_execution_started_at",
+          "col_execution_ended_at",
+          "col_execution_created_at"
+        ],
+        "ui": {
+          "x": 920,
+          "y": 1425.75,
+          "zIndex": 1,
+          "widthName": 110,
+          "widthComment": 129,
+          "color": "#FFFDE7"
+        },
+        "meta": {
+          "updateAt": 1783999488685,
+          "createAt": 1783999063990
+        }
+      },
+      "tbl_execution_log": {
+        "id": "tbl_execution_log",
+        "name": "migration_execution_log",
+        "comment": "실행 로그",
+        "columnIds": [
+          "col_execution_log_id",
+          "col_execution_log_execution_id",
+          "col_execution_log_log_level",
+          "col_execution_log_issue_type",
+          "col_execution_log_message",
+          "col_execution_log_context_json",
+          "col_execution_log_logged_at"
+        ],
+        "seqColumnIds": [
+          "col_execution_log_id",
+          "col_execution_log_execution_id",
+          "col_execution_log_log_level",
+          "col_execution_log_issue_type",
+          "col_execution_log_message",
+          "col_execution_log_context_json",
+          "col_execution_log_logged_at"
+        ],
+        "ui": {
+          "x": 1670,
+          "y": 1338.75,
+          "zIndex": 1,
+          "widthName": 132,
+          "widthComment": 60,
+          "color": "#FCE4EC"
+        },
+        "meta": {
+          "updateAt": 1783999255643,
+          "createAt": 1783999063990
+        }
+      },
+      "tbl_audit": {
+        "id": "tbl_audit",
+        "name": "migration_audit_history",
+        "comment": "변경/운영 이력",
+        "columnIds": [
+          "col_audit_id",
+          "col_audit_job_id",
+          "col_audit_history_type",
+          "col_audit_event_status",
+          "col_audit_description",
+          "col_audit_actor",
+          "col_audit_before_json",
+          "col_audit_after_json",
+          "col_audit_occurred_at"
+        ],
+        "seqColumnIds": [
+          "col_audit_id",
+          "col_audit_job_id",
+          "col_audit_history_type",
+          "col_audit_event_status",
+          "col_audit_description",
+          "col_audit_actor",
+          "col_audit_before_json",
+          "col_audit_after_json",
+          "col_audit_occurred_at"
+        ],
+        "ui": {
+          "x": 1616,
+          "y": 729,
+          "zIndex": 1,
+          "widthName": 126,
+          "widthComment": 82,
+          "color": "#ECEFF1"
+        },
+        "meta": {
+          "updateAt": 1783999679211,
+          "createAt": 1783999063990
+        }
+      }
+    },
+    "tableColumnEntities": {
+      "col_source_id": {
+        "id": "col_source_id",
+        "tableId": "tbl_source",
+        "name": "id",
+        "comment": "소스 연결정보 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 92,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_type": {
+        "id": "col_source_type",
+        "tableId": "tbl_source",
+        "name": "source_type",
+        "comment": "mysql, postgresql, oracle 등",
+        "dataType": "VARCHAR(30)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 65,
+          "widthComment": 148,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_connection_name": {
+        "id": "col_source_connection_name",
+        "tableId": "tbl_source",
+        "name": "connection_name",
+        "comment": "소스 연결명",
+        "dataType": "VARCHAR(200)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 95,
+          "widthComment": 65,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_host": {
+        "id": "col_source_host",
+        "tableId": "tbl_source",
+        "name": "host",
+        "comment": "소스 DB 호스트",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 84,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_port": {
+        "id": "col_source_port",
+        "tableId": "tbl_source",
+        "name": "port",
+        "comment": "소스 DB 포트",
+        "dataType": "INT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 72,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_database_name": {
+        "id": "col_source_database_name",
+        "tableId": "tbl_source",
+        "name": "database_name",
+        "comment": "RDB 데이터베이스명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 84,
+          "widthComment": 112,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_username": {
+        "id": "col_source_username",
+        "tableId": "tbl_source",
+        "name": "username",
+        "comment": "접속 계정",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_password_secret": {
+        "id": "col_source_password_secret",
+        "tableId": "tbl_source",
+        "name": "password_secret",
+        "comment": "시크릿 저장소 참조키",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 89,
+          "widthComment": 117,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_jdbc_params_json": {
+        "id": "col_source_jdbc_params_json",
+        "tableId": "tbl_source",
+        "name": "jdbc_params_json",
+        "comment": "JDBC/SSL 등 추가 옵션",
+        "dataType": "JSON",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 95,
+          "widthComment": 122,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_last_tested_at": {
+        "id": "col_source_last_tested_at",
+        "tableId": "tbl_source",
+        "name": "last_tested_at",
+        "comment": "최근 연결 테스트 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 73,
+          "widthComment": 120,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_last_test_status": {
+        "id": "col_source_last_test_status",
+        "tableId": "tbl_source",
+        "name": "last_test_status",
+        "comment": "success, failed",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 81,
+          "widthComment": 76,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_created_at": {
+        "id": "col_source_created_at",
+        "tableId": "tbl_source",
+        "name": "created_at",
+        "comment": "생성 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_source_updated_at": {
+        "id": "col_source_updated_at",
+        "tableId": "tbl_source",
+        "name": "updated_at",
+        "comment": "수정 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_id": {
+        "id": "col_target_id",
+        "tableId": "tbl_target",
+        "name": "id",
+        "comment": "타겟 연결정보 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 92,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_type": {
+        "id": "col_target_type",
+        "tableId": "tbl_target",
+        "name": "target_type",
+        "comment": "mongodb",
+        "dataType": "VARCHAR(30)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_connection_name": {
+        "id": "col_target_connection_name",
+        "tableId": "tbl_target",
+        "name": "connection_name",
+        "comment": "타겟 연결명",
+        "dataType": "VARCHAR(200)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 95,
+          "widthComment": 65,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_uri_secret": {
+        "id": "col_target_uri_secret",
+        "tableId": "tbl_target",
+        "name": "uri_secret",
+        "comment": "MongoDB URI 또는 시크릿 참조키",
+        "dataType": "VARCHAR(500)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 184,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_connection_scheme": {
+        "id": "col_target_connection_scheme",
+        "tableId": "tbl_target",
+        "name": "connection_scheme",
+        "comment": "mongodb, mongodb+srv",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 106,
+          "widthComment": 136,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_host": {
+        "id": "col_target_host",
+        "tableId": "tbl_target",
+        "name": "host",
+        "comment": "MongoDB 호스트",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 95,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_port": {
+        "id": "col_target_port",
+        "tableId": "tbl_target",
+        "name": "port",
+        "comment": "MongoDB 포트",
+        "dataType": "INT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 83,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_database_name": {
+        "id": "col_target_database_name",
+        "tableId": "tbl_target",
+        "name": "database_name",
+        "comment": "타겟 데이터베이스명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 84,
+          "widthComment": 113,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_default_collection_name": {
+        "id": "col_target_default_collection_name",
+        "tableId": "tbl_target",
+        "name": "default_collection_name",
+        "comment": "기본 컬렉션명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 129,
+          "widthComment": 77,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_auth_options_json": {
+        "id": "col_target_auth_options_json",
+        "tableId": "tbl_target",
+        "name": "auth_options_json",
+        "comment": "인증/TLS/Atlas 옵션",
+        "dataType": "JSON",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 98,
+          "widthComment": 107,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_last_tested_at": {
+        "id": "col_target_last_tested_at",
+        "tableId": "tbl_target",
+        "name": "last_tested_at",
+        "comment": "최근 연결 테스트 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 73,
+          "widthComment": 120,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_last_test_status": {
+        "id": "col_target_last_test_status",
+        "tableId": "tbl_target",
+        "name": "last_test_status",
+        "comment": "success, failed",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 81,
+          "widthComment": 76,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_created_at": {
+        "id": "col_target_created_at",
+        "tableId": "tbl_target",
+        "name": "created_at",
+        "comment": "생성 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_target_updated_at": {
+        "id": "col_target_updated_at",
+        "tableId": "tbl_target",
+        "name": "updated_at",
+        "comment": "수정 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_id": {
+        "id": "col_job_id",
+        "tableId": "tbl_job",
+        "name": "id",
+        "comment": "마이그레이션 작업 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 116,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_code": {
+        "id": "col_job_code",
+        "tableId": "tbl_job",
+        "name": "job_code",
+        "comment": "CONN001 등 화면 표시용 ID",
+        "dataType": "VARCHAR(40)",
+        "default": "",
+        "options": 12,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 152,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_name": {
+        "id": "col_job_name",
+        "tableId": "tbl_job",
+        "name": "job_name",
+        "comment": "운영자가 식별하는 작업명",
+        "dataType": "VARCHAR(200)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 141,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_source_id": {
+        "id": "col_job_source_id",
+        "tableId": "tbl_job",
+        "name": "source_id",
+        "comment": "migration_source.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 60,
+          "widthComment": 106,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_target_id": {
+        "id": "col_job_target_id",
+        "tableId": "tbl_job",
+        "name": "target_id",
+        "comment": "migration_target.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 60,
+          "widthComment": 103,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_sync_mode": {
+        "id": "col_job_sync_mode",
+        "tableId": "tbl_job",
+        "name": "sync_mode",
+        "comment": "full, incremental",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 61,
+          "widthComment": 86,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_schedule_type": {
+        "id": "col_job_schedule_type",
+        "tableId": "tbl_job",
+        "name": "schedule_type",
+        "comment": "manual, interval, cron",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 77,
+          "widthComment": 115,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_schedule_expr": {
+        "id": "col_job_schedule_expr",
+        "tableId": "tbl_job",
+        "name": "schedule_expr",
+        "comment": "간격 또는 Cron 표현식",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 77,
+          "widthComment": 121,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_status": {
+        "id": "col_job_status",
+        "tableId": "tbl_job",
+        "name": "status",
+        "comment": "draft, ready, running, failed, archived",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 195,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_created_by": {
+        "id": "col_job_created_by",
+        "tableId": "tbl_job",
+        "name": "created_by",
+        "comment": "생성자",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_last_executed_at": {
+        "id": "col_job_last_executed_at",
+        "tableId": "tbl_job",
+        "name": "last_executed_at",
+        "comment": "최근 실행 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 88,
+          "widthComment": 81,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_last_execution_status": {
+        "id": "col_job_last_execution_status",
+        "tableId": "tbl_job",
+        "name": "last_execution_status",
+        "comment": "최근 실행 상태",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 113,
+          "widthComment": 81,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_created_at": {
+        "id": "col_job_created_at",
+        "tableId": "tbl_job",
+        "name": "created_at",
+        "comment": "생성 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_job_updated_at": {
+        "id": "col_job_updated_at",
+        "tableId": "tbl_job",
+        "name": "updated_at",
+        "comment": "수정 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_id": {
+        "id": "col_dataset_id",
+        "tableId": "tbl_dataset",
+        "name": "id",
+        "comment": "이관 대상 테이블/컬럼 선택 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 163,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_job_id": {
+        "id": "col_dataset_job_id",
+        "tableId": "tbl_dataset",
+        "name": "job_id",
+        "comment": "migration_job.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 60,
+          "widthComment": 88,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_source_schema": {
+        "id": "col_dataset_source_schema",
+        "tableId": "tbl_dataset",
+        "name": "source_schema",
+        "comment": "소스 스키마명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 82,
+          "widthComment": 77,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_source_table": {
+        "id": "col_dataset_source_table",
+        "tableId": "tbl_dataset",
+        "name": "source_table",
+        "comment": "소스 테이블명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 68,
+          "widthComment": 77,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_source_column": {
+        "id": "col_dataset_source_column",
+        "tableId": "tbl_dataset",
+        "name": "source_column",
+        "comment": "소스 컬럼명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 81,
+          "widthComment": 65,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_source_data_type": {
+        "id": "col_dataset_source_data_type",
+        "tableId": "tbl_dataset",
+        "name": "source_data_type",
+        "comment": "소스 컬럼 타입",
+        "dataType": "VARCHAR(80)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 93,
+          "widthComment": 81,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_is_selected": {
+        "id": "col_dataset_is_selected",
+        "tableId": "tbl_dataset",
+        "name": "is_selected",
+        "comment": "이관 대상 선택 여부",
+        "dataType": "TINYINT(1)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 108,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_is_primary_key": {
+        "id": "col_dataset_is_primary_key",
+        "tableId": "tbl_dataset",
+        "name": "is_primary_key",
+        "comment": "원본 PK 여부",
+        "dataType": "TINYINT(1)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 79,
+          "widthComment": 70,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_incremental_key_column": {
+        "id": "col_dataset_incremental_key_column",
+        "tableId": "tbl_dataset",
+        "name": "incremental_key_column",
+        "comment": "증분 기준 컬럼",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 132,
+          "widthComment": 81,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_sort_order": {
+        "id": "col_dataset_sort_order",
+        "tableId": "tbl_dataset",
+        "name": "sort_order",
+        "comment": "표시 순서",
+        "dataType": "INT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_created_at": {
+        "id": "col_dataset_created_at",
+        "tableId": "tbl_dataset",
+        "name": "created_at",
+        "comment": "생성 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_dataset_updated_at": {
+        "id": "col_dataset_updated_at",
+        "tableId": "tbl_dataset",
+        "name": "updated_at",
+        "comment": "수정 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_id": {
+        "id": "col_mapping_id",
+        "tableId": "tbl_mapping",
+        "name": "id",
+        "comment": "컬럼-필드 매핑 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 97,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_job_id": {
+        "id": "col_mapping_job_id",
+        "tableId": "tbl_mapping",
+        "name": "job_id",
+        "comment": "migration_job.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 60,
+          "widthComment": 88,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_target_collection_name": {
+        "id": "col_mapping_target_collection_name",
+        "tableId": "tbl_mapping",
+        "name": "target_collection_name",
+        "comment": "적용 대상 MongoDB 컬렉션명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 124,
+          "widthComment": 162,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_source_table": {
+        "id": "col_mapping_source_table",
+        "tableId": "tbl_mapping",
+        "name": "source_table",
+        "comment": "원본 RDB 테이블명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 68,
+          "widthComment": 103,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_source_column": {
+        "id": "col_mapping_source_column",
+        "tableId": "tbl_mapping",
+        "name": "source_column",
+        "comment": "원본 RDB 컬럼명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 81,
+          "widthComment": 91,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_target_field": {
+        "id": "col_mapping_target_field",
+        "tableId": "tbl_mapping",
+        "name": "target_field",
+        "comment": "MongoDB 문서 필드 경로",
+        "dataType": "VARCHAR(200)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 138,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_target_type": {
+        "id": "col_mapping_target_type",
+        "tableId": "tbl_mapping",
+        "name": "target_type",
+        "comment": "string, int32, int64, date 등",
+        "dataType": "VARCHAR(30)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 142,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_is_key_field": {
+        "id": "col_mapping_is_key_field",
+        "tableId": "tbl_mapping",
+        "name": "is_key_field",
+        "comment": "업서트 식별 키 여부",
+        "dataType": "TINYINT(1)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 61,
+          "widthComment": 108,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_is_pk_mapping": {
+        "id": "col_mapping_is_pk_mapping",
+        "tableId": "tbl_mapping",
+        "name": "is_pk_mapping",
+        "comment": "원본 PK 매핑 여부",
+        "dataType": "TINYINT(1)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 80,
+          "widthComment": 98,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_null_handling_type": {
+        "id": "col_mapping_null_handling_type",
+        "tableId": "tbl_mapping",
+        "name": "null_handling_type",
+        "comment": "keep_null, default_value, skip_field",
+        "dataType": "VARCHAR(30)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 101,
+          "widthComment": 182,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_default_value": {
+        "id": "col_mapping_default_value",
+        "tableId": "tbl_mapping",
+        "name": "default_value",
+        "comment": "널/빈 문자열 대체값",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 72,
+          "widthComment": 109,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_transform_rule_json": {
+        "id": "col_mapping_transform_rule_json",
+        "tableId": "tbl_mapping",
+        "name": "transform_rule_json",
+        "comment": "치환, 패턴, 케이스, 포맷, 품질 규칙",
+        "dataType": "JSON",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 105,
+          "widthComment": 185,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_enabled": {
+        "id": "col_mapping_enabled",
+        "tableId": "tbl_mapping",
+        "name": "enabled",
+        "comment": "활성화 여부",
+        "dataType": "TINYINT(1)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 65,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_sort_order": {
+        "id": "col_mapping_sort_order",
+        "tableId": "tbl_mapping",
+        "name": "sort_order",
+        "comment": "적용 순서",
+        "dataType": "INT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_created_at": {
+        "id": "col_mapping_created_at",
+        "tableId": "tbl_mapping",
+        "name": "created_at",
+        "comment": "생성 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_mapping_updated_at": {
+        "id": "col_mapping_updated_at",
+        "tableId": "tbl_mapping",
+        "name": "updated_at",
+        "comment": "수정 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_id": {
+        "id": "col_index_id",
+        "tableId": "tbl_index",
+        "name": "id",
+        "comment": "MongoDB 인덱스 정의 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 137,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_job_id": {
+        "id": "col_index_job_id",
+        "tableId": "tbl_index",
+        "name": "job_id",
+        "comment": "migration_job.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 60,
+          "widthComment": 88,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_collection_name": {
+        "id": "col_index_collection_name",
+        "tableId": "tbl_index",
+        "name": "collection_name",
+        "comment": "인덱스 대상 컬렉션명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 87,
+          "widthComment": 117,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_index_name": {
+        "id": "col_index_index_name",
+        "tableId": "tbl_index",
+        "name": "index_name",
+        "comment": "인덱스명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 65,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_index_keys_json": {
+        "id": "col_index_index_keys_json",
+        "tableId": "tbl_index",
+        "name": "index_keys_json",
+        "comment": "필드와 정렬 방향",
+        "dataType": "JSON",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 85,
+          "widthComment": 93,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_unique_yn": {
+        "id": "col_index_unique_yn",
+        "tableId": "tbl_index",
+        "name": "unique_yn",
+        "comment": "유니크 여부",
+        "dataType": "TINYINT(1)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 65,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_options_json": {
+        "id": "col_index_options_json",
+        "tableId": "tbl_index",
+        "name": "options_json",
+        "comment": "TTL, sparse 등 옵션",
+        "dataType": "JSON",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 69,
+          "widthComment": 103,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_enabled": {
+        "id": "col_index_enabled",
+        "tableId": "tbl_index",
+        "name": "enabled",
+        "comment": "생성 대상 여부",
+        "dataType": "TINYINT(1)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 81,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_created_at": {
+        "id": "col_index_created_at",
+        "tableId": "tbl_index",
+        "name": "created_at",
+        "comment": "생성 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_index_updated_at": {
+        "id": "col_index_updated_at",
+        "tableId": "tbl_index",
+        "name": "updated_at",
+        "comment": "수정 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_post_action_id": {
+        "id": "col_post_action_id",
+        "tableId": "tbl_post_action",
+        "name": "id",
+        "comment": "적재 후 MongoDB 작업 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 141,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_post_action_job_id": {
+        "id": "col_post_action_job_id",
+        "tableId": "tbl_post_action",
+        "name": "job_id",
+        "comment": "migration_job.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 60,
+          "widthComment": 88,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_post_action_collection_name": {
+        "id": "col_post_action_collection_name",
+        "tableId": "tbl_post_action",
+        "name": "collection_name",
+        "comment": "대상 컬렉션명",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 87,
+          "widthComment": 77,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_post_action_action_type": {
+        "id": "col_post_action_action_type",
+        "tableId": "tbl_post_action",
+        "name": "action_type",
+        "comment": "updateMany, aggregate, command 등",
+        "dataType": "VARCHAR(40)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 63,
+          "widthComment": 203,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_post_action_query_json": {
+        "id": "col_post_action_query_json",
+        "tableId": "tbl_post_action",
+        "name": "query_json",
+        "comment": "필터 또는 집계 파이프라인",
+        "dataType": "JSON",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 144,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_post_action_enabled": {
+        "id": "col_post_action_enabled",
+        "tableId": "tbl_post_action",
+        "name": "enabled",
+        "comment": "실행 여부",
+        "dataType": "TINYINT(1)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_post_action_sort_order": {
+        "id": "col_post_action_sort_order",
+        "tableId": "tbl_post_action",
+        "name": "sort_order",
+        "comment": "실행 순서",
+        "dataType": "INT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_post_action_created_at": {
+        "id": "col_post_action_created_at",
+        "tableId": "tbl_post_action",
+        "name": "created_at",
+        "comment": "생성 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_post_action_updated_at": {
+        "id": "col_post_action_updated_at",
+        "tableId": "tbl_post_action",
+        "name": "updated_at",
+        "comment": "수정 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_id": {
+        "id": "col_execution_id",
+        "tableId": "tbl_execution",
+        "name": "id",
+        "comment": "실행 이력 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 68,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_job_id": {
+        "id": "col_execution_job_id",
+        "tableId": "tbl_execution",
+        "name": "job_id",
+        "comment": "migration_job.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 60,
+          "widthComment": 88,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_execution_code": {
+        "id": "col_execution_execution_code",
+        "tableId": "tbl_execution",
+        "name": "execution_code",
+        "comment": "sync-YYYYMMDD-HHMMSS",
+        "dataType": "VARCHAR(80)",
+        "default": "",
+        "options": 12,
+        "ui": {
+          "keys": 0,
+          "widthName": 84,
+          "widthComment": 151,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_run_mode": {
+        "id": "col_execution_run_mode",
+        "tableId": "tbl_execution",
+        "name": "run_mode",
+        "comment": "manual, scheduled",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 101,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_requested_by": {
+        "id": "col_execution_requested_by",
+        "tableId": "tbl_execution",
+        "name": "requested_by",
+        "comment": "요청자",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 73,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_result_status": {
+        "id": "col_execution_result_status",
+        "tableId": "tbl_execution",
+        "name": "result_status",
+        "comment": "queued, running, success, failed, stopped, partial_success",
+        "dataType": "VARCHAR(30)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 67,
+          "widthComment": 303,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_read_count": {
+        "id": "col_execution_read_count",
+        "tableId": "tbl_execution",
+        "name": "read_count",
+        "comment": "읽은 레코드 수",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 61,
+          "widthComment": 81,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_written_count": {
+        "id": "col_execution_written_count",
+        "tableId": "tbl_execution",
+        "name": "written_count",
+        "comment": "적재 완료 수",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 74,
+          "widthComment": 69,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_failed_count": {
+        "id": "col_execution_failed_count",
+        "tableId": "tbl_execution",
+        "name": "failed_count",
+        "comment": "실패 수",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 66,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_progress_rate": {
+        "id": "col_execution_progress_rate",
+        "tableId": "tbl_execution",
+        "name": "progress_rate",
+        "comment": "진행률",
+        "dataType": "DECIMAL(5,2)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 74,
+          "widthComment": 60,
+          "widthDataType": 74,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_response_time_ms": {
+        "id": "col_execution_response_time_ms",
+        "tableId": "tbl_execution",
+        "name": "response_time_ms",
+        "comment": "응답 시간",
+        "dataType": "INT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 99,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_error_message": {
+        "id": "col_execution_error_message",
+        "tableId": "tbl_execution",
+        "name": "error_message",
+        "comment": "실패 요약 메시지",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 79,
+          "widthComment": 93,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_started_at": {
+        "id": "col_execution_started_at",
+        "tableId": "tbl_execution",
+        "name": "started_at",
+        "comment": "실행 시작 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 81,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_ended_at": {
+        "id": "col_execution_ended_at",
+        "tableId": "tbl_execution",
+        "name": "ended_at",
+        "comment": "실행 종료 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 81,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_created_at": {
+        "id": "col_execution_created_at",
+        "tableId": "tbl_execution",
+        "name": "created_at",
+        "comment": "이력 생성 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 81,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_log_id": {
+        "id": "col_execution_log_id",
+        "tableId": "tbl_execution_log",
+        "name": "id",
+        "comment": "실행 로그 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 68,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_log_execution_id": {
+        "id": "col_execution_log_execution_id",
+        "tableId": "tbl_execution_log",
+        "name": "execution_id",
+        "comment": "migration_execution.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 68,
+          "widthComment": 122,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_log_log_level": {
+        "id": "col_execution_log_log_level",
+        "tableId": "tbl_execution_log",
+        "name": "log_level",
+        "comment": "ERROR, WARN, INFO, DEBUG",
+        "dataType": "VARCHAR(10)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 156,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_log_issue_type": {
+        "id": "col_execution_log_issue_type",
+        "tableId": "tbl_execution_log",
+        "name": "issue_type",
+        "comment": "connection, transform, validation, write 등",
+        "dataType": "VARCHAR(40)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 223,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_log_message": {
+        "id": "col_execution_log_message",
+        "tableId": "tbl_execution_log",
+        "name": "message",
+        "comment": "로그 메시지",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 65,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_log_context_json": {
+        "id": "col_execution_log_context_json",
+        "tableId": "tbl_execution_log",
+        "name": "context_json",
+        "comment": "테이블, 컬럼, 배치, 예외 상세",
+        "dataType": "JSON",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 68,
+          "widthComment": 155,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_execution_log_logged_at": {
+        "id": "col_execution_log_logged_at",
+        "tableId": "tbl_execution_log",
+        "name": "logged_at",
+        "comment": "로그 발생 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 81,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_audit_id": {
+        "id": "col_audit_id",
+        "tableId": "tbl_audit",
+        "name": "id",
+        "comment": "변경/운영 이력 ID",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 97,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_audit_job_id": {
+        "id": "col_audit_job_id",
+        "tableId": "tbl_audit",
+        "name": "job_id",
+        "comment": "migration_job.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 60,
+          "widthComment": 88,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_audit_history_type": {
+        "id": "col_audit_history_type",
+        "tableId": "tbl_audit",
+        "name": "history_type",
+        "comment": "created, updated, executed, schedule_changed, stopped",
+        "dataType": "VARCHAR(40)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 66,
+          "widthComment": 298,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_audit_event_status": {
+        "id": "col_audit_event_status",
+        "tableId": "tbl_audit",
+        "name": "event_status",
+        "comment": "success, failed, applied",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 67,
+          "widthComment": 122,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_audit_description": {
+        "id": "col_audit_description",
+        "tableId": "tbl_audit",
+        "name": "description",
+        "comment": "이력 설명",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 61,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_audit_actor": {
+        "id": "col_audit_actor",
+        "tableId": "tbl_audit",
+        "name": "actor",
+        "comment": "수행자",
+        "dataType": "VARCHAR(120)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_audit_before_json": {
+        "id": "col_audit_before_json",
+        "tableId": "tbl_audit",
+        "name": "before_json",
+        "comment": "변경 전 값",
+        "dataType": "JSON",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 63,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_audit_after_json": {
+        "id": "col_audit_after_json",
+        "tableId": "tbl_audit",
+        "name": "after_json",
+        "comment": "변경 후 값",
+        "dataType": "JSON",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "col_audit_occurred_at": {
+        "id": "col_audit_occurred_at",
+        "tableId": "tbl_audit",
+        "name": "occurred_at",
+        "comment": "이력 발생 시각",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 64,
+          "widthComment": 81,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      }
+    },
+    "relationshipEntities": {
+      "rel_source_job": {
+        "id": "rel_source_job",
+        "identification": false,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "tbl_source",
+          "columnIds": [
+            "col_source_id"
+          ],
+          "x": 317,
+          "y": 448,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "tbl_job",
+          "columnIds": [
+            "col_job_source_id"
+          ],
+          "x": 253,
+          "y": 555,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "rel_target_job": {
+        "id": "rel_target_job",
+        "identification": false,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "tbl_target",
+          "columnIds": [
+            "col_target_id"
+          ],
+          "x": 755,
+          "y": 238.5,
+          "direction": 1
+        },
+        "end": {
+          "tableId": "tbl_job",
+          "columnIds": [
+            "col_job_target_id"
+          ],
+          "x": 499,
+          "y": 555,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "rel_job_dataset": {
+        "id": "rel_job_dataset",
+        "identification": false,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "tbl_job",
+          "columnIds": [
+            "col_job_id"
+          ],
+          "x": 622,
+          "y": 604,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "tbl_dataset",
+          "columnIds": [
+            "col_dataset_job_id"
+          ],
+          "x": 1368.75,
+          "y": 517.75,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "rel_job_mapping": {
+        "id": "rel_job_mapping",
+        "identification": false,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "tbl_job",
+          "columnIds": [
+            "col_job_id"
+          ],
+          "x": 622,
+          "y": 800,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "tbl_mapping",
+          "columnIds": [
+            "col_mapping_job_id"
+          ],
+          "x": 1182.5,
+          "y": 1111.25,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "rel_job_index": {
+        "id": "rel_job_index",
+        "identification": false,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "tbl_job",
+          "columnIds": [
+            "col_job_id"
+          ],
+          "x": 253,
+          "y": 947,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "tbl_index",
+          "columnIds": [
+            "col_index_job_id"
+          ],
+          "x": 254.5,
+          "y": 1315.5,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "rel_job_post_action": {
+        "id": "rel_job_post_action",
+        "identification": false,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "tbl_job",
+          "columnIds": [
+            "col_job_id"
+          ],
+          "x": 499,
+          "y": 947,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "tbl_post_action",
+          "columnIds": [
+            "col_post_action_job_id"
+          ],
+          "x": 569.25,
+          "y": 1229,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "rel_job_execution": {
+        "id": "rel_job_execution",
+        "identification": false,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "tbl_job",
+          "columnIds": [
+            "col_job_id"
+          ],
+          "x": 622,
+          "y": 898,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "tbl_execution",
+          "columnIds": [
+            "col_execution_job_id"
+          ],
+          "x": 1159,
+          "y": 1425.75,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "rel_execution_log": {
+        "id": "rel_execution_log",
+        "identification": false,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "tbl_execution",
+          "columnIds": [
+            "col_execution_id"
+          ],
+          "x": 1398,
+          "y": 1633.75,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "tbl_execution_log",
+          "columnIds": [
+            "col_execution_log_execution_id"
+          ],
+          "x": 1670,
+          "y": 1450.75,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      },
+      "rel_job_audit": {
+        "id": "rel_job_audit",
+        "identification": false,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "tbl_job",
+          "columnIds": [
+            "col_job_id"
+          ],
+          "x": 622,
+          "y": 702,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "tbl_audit",
+          "columnIds": [
+            "col_audit_job_id"
+          ],
+          "x": 1616,
+          "y": 865,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1783999063990,
+          "createAt": 1783999063990
+        }
+      }
+    },
+    "indexEntities": {},
+    "indexColumnEntities": {},
+    "memoEntities": {}
   }
-
-  MIGRATION_TARGET {
-    BIGINT id PK "타겟 연결정보 ID"
-    VARCHAR target_type "mongodb"
-    VARCHAR connection_name "타겟 연결명"
-    VARCHAR uri_secret "MongoDB URI 또는 시크릿 참조키"
-    VARCHAR connection_scheme "mongodb, mongodb+srv"
-    VARCHAR host "MongoDB 호스트"
-    INT port "MongoDB 포트"
-    VARCHAR database_name "타겟 데이터베이스명"
-    VARCHAR default_collection_name "기본 컬렉션명"
-    JSON auth_options_json "인증/TLS/Atlas 옵션"
-    DATETIME last_tested_at "최근 연결 테스트 시각"
-    VARCHAR last_test_status "success, failed"
-    DATETIME created_at "생성 시각"
-    DATETIME updated_at "수정 시각"
-  }
-
-  MIGRATION_JOB {
-    BIGINT id PK "마이그레이션 작업 ID"
-    VARCHAR job_code UK "CONN001 등 화면 표시용 ID"
-    VARCHAR job_name "운영자가 식별하는 작업명"
-    BIGINT source_id FK "MIGRATION_SOURCE.id"
-    BIGINT target_id FK "MIGRATION_TARGET.id"
-    VARCHAR sync_mode "full, incremental"
-    VARCHAR schedule_type "manual, interval, cron"
-    VARCHAR schedule_expr "간격 또는 Cron 표현식"
-    VARCHAR status "draft, ready, running, failed, archived"
-    VARCHAR created_by "생성자"
-    DATETIME last_executed_at "최근 실행 시각"
-    VARCHAR last_execution_status "최근 실행 상태"
-    DATETIME created_at "생성 시각"
-    DATETIME updated_at "수정 시각"
-  }
-
-  MIGRATION_SOURCE_DATASET {
-    BIGINT id PK "이관 대상 테이블/컬럼 선택 ID"
-    BIGINT job_id FK "MIGRATION_JOB.id"
-    VARCHAR source_schema "소스 스키마명"
-    VARCHAR source_table "소스 테이블명"
-    VARCHAR source_column "소스 컬럼명"
-    VARCHAR source_data_type "소스 컬럼 타입"
-    BOOLEAN is_selected "이관 대상 선택 여부"
-    BOOLEAN is_primary_key "원본 PK 여부"
-    VARCHAR incremental_key_column "증분 기준 컬럼"
-    INT sort_order "표시 순서"
-    DATETIME created_at "생성 시각"
-    DATETIME updated_at "수정 시각"
-  }
-
-  MIGRATION_MAPPING {
-    BIGINT id PK "컬럼-필드 매핑 ID"
-    BIGINT job_id FK "MIGRATION_JOB.id"
-    VARCHAR target_collection_name "적용 대상 MongoDB 컬렉션명"
-    VARCHAR source_table "원본 RDB 테이블명"
-    VARCHAR source_column "원본 RDB 컬럼명"
-    VARCHAR target_field "MongoDB 문서 필드 경로"
-    VARCHAR target_type "string, int32, int64, date, boolean, objectId 등"
-    BOOLEAN is_key_field "업서트 식별 키 여부"
-    BOOLEAN is_pk_mapping "원본 PK 매핑 여부"
-    VARCHAR null_handling_type "keep_null, default_value, skip_field"
-    VARCHAR default_value "널/빈 문자열 대체값"
-    JSON transform_rule_json "치환, 패턴, 케이스, 포맷, 품질 규칙"
-    BOOLEAN enabled "활성화 여부"
-    INT sort_order "적용 순서"
-    DATETIME created_at "생성 시각"
-    DATETIME updated_at "수정 시각"
-  }
-
-  MIGRATION_TARGET_INDEX {
-    BIGINT id PK "MongoDB 인덱스 정의 ID"
-    BIGINT job_id FK "MIGRATION_JOB.id"
-    VARCHAR collection_name "인덱스 대상 컬렉션명"
-    VARCHAR index_name "인덱스명"
-    JSON index_keys_json "필드와 정렬 방향"
-    BOOLEAN unique_yn "유니크 여부"
-    JSON options_json "TTL, sparse 등 옵션"
-    BOOLEAN enabled "생성 대상 여부"
-    DATETIME created_at "생성 시각"
-    DATETIME updated_at "수정 시각"
-  }
-
-  MIGRATION_POST_ACTION {
-    BIGINT id PK "적재 후 MongoDB 작업 ID"
-    BIGINT job_id FK "MIGRATION_JOB.id"
-    VARCHAR collection_name "대상 컬렉션명"
-    VARCHAR action_type "updateMany, aggregate, command 등"
-    JSON query_json "필터 또는 집계 파이프라인"
-    BOOLEAN enabled "실행 여부"
-    INT sort_order "실행 순서"
-    DATETIME created_at "생성 시각"
-    DATETIME updated_at "수정 시각"
-  }
-
-  MIGRATION_EXECUTION {
-    BIGINT id PK "실행 이력 ID"
-    BIGINT job_id FK "MIGRATION_JOB.id"
-    VARCHAR execution_code UK "sync-YYYYMMDD-HHMMSS"
-    VARCHAR run_mode "manual, scheduled"
-    VARCHAR requested_by "요청자"
-    VARCHAR result_status "queued, running, success, failed, stopped, partial_success"
-    BIGINT read_count "읽은 레코드 수"
-    BIGINT written_count "적재 완료 수"
-    BIGINT failed_count "실패 수"
-    DECIMAL progress_rate "진행률"
-    INT response_time_ms "응답 시간"
-    TEXT error_message "실패 요약 메시지"
-    DATETIME started_at "실행 시작 시각"
-    DATETIME ended_at "실행 종료 시각"
-    DATETIME created_at "이력 생성 시각"
-  }
-
-  MIGRATION_EXECUTION_LOG {
-    BIGINT id PK "실행 로그 ID"
-    BIGINT execution_id FK "MIGRATION_EXECUTION.id"
-    VARCHAR log_level "ERROR, WARN, INFO, DEBUG"
-    VARCHAR issue_type "connection, transform, validation, write 등"
-    TEXT message "로그 메시지"
-    JSON context_json "테이블, 컬럼, 배치, 예외 상세"
-    DATETIME logged_at "로그 발생 시각"
-  }
-
-  MIGRATION_AUDIT_HISTORY {
-    BIGINT id PK "변경/운영 이력 ID"
-    BIGINT job_id FK "MIGRATION_JOB.id"
-    VARCHAR history_type "created, updated, executed, schedule_changed, stopped"
-    VARCHAR event_status "success, failed, applied"
-    TEXT description "이력 설명"
-    VARCHAR actor "수행자"
-    JSON before_json "변경 전 값"
-    JSON after_json "변경 후 값"
-    DATETIME occurred_at "이력 발생 시각"
-  }
+}
